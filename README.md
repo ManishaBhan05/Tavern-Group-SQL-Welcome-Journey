@@ -1,57 +1,157 @@
-Tavern Group | SQL-Powered Welcome Journey
-A Salesforce Marketing Cloud (SFMC) SQL capstone demonstrating how an always-on welcome audience can be qualified, prepared, and monitored through SQL Query Activities, Automation Studio, Data Extensions, and Journey Builder.
-Project type: Fictional training/portfolio capstone. The automation was tested and the welcome journey was configured, but the journey was not activated for live sending. No production campaign metrics are claimed.
-Business scenario
-The Tavern Group operates multiple hospitality venues with registrations from kiosks, web, and an app. The proposed solution qualifies newly registered rewards members for a venue-based welcome journey and tracks whether their welcome coupon has been redeemed.
-Journey goal: Introduce each eligible member to their registered venue and encourage coupon redemption within 14 days of signup.
-Planned communication	Timing	Purpose
-Welcome email (E1)	Within 1 day	Introduce the member's registered venue
-Educational email (E2)	Day 3	Introduce the venue's events and activities
-Offer email (E3)	Day 7	Present the welcome coupon
-Conditional reminder (E4)	Day 14 if not redeemed	Remind members with unused coupons
 
+# Tavern Group | SQL-Powered Welcome Journey
 
-Audience qualification
-The staging query selects members who have opted into marketing email, signed up within the previous 24 hours, are 21 or older, and registered with an active venue. It excludes addresses in ExcludedMembers, staff email addresses, and MemberIDs already present in Welcome_Journey_Entry.
-It generates the coupon code in the form WELCOME-<MemberID> and an initial HasRedeemed flag.
-Solution architecture
-flowchart TD
-    A[Signups] --> Q1[1. Welcome_Journey_Staging]
-    V[Venue] --> Q1
-    X[ExcludedMembers] --> Q1
-    T[Transactions] --> Q1
-    Q1 --> SD[Welcome_Journey_Staging DE]
-    SD --> Q2[2. Welcome_Journey_Entry_SQL]
-    Q2 --> ED[Welcome_Journey_Entry DE]
-    ED --> JB[Journey Builder: Welcome Journey]
-    ED --> Q3[3. Welcome_Journey_Flag_Update]
-    T --> Q3
-    Q3 --> ST[Welcome_Journey_Status DE]
-    ST -. Redemption status for journey logic .-> JB
-The dashed connection represents intended use of redemption status by the journey; it does not assert that a production data relationship or live send was validated.
-SQL Query Activities
-The SQL files below preserve the submitted query statements and comments. The file names match their activity names in Automation Studio.
-Step	Activity / SQL file	Target Data Extension	Function
-1	Welcome_Journey_Staging.sql	Welcome_Journey_Staging	Qualify eligible new members and prepare calculated fields
-2	Welcome_Journey_Entry_SQL.sql	Welcome_Journey_Entry	Transfer qualified records from staging
-3	Welcome_Journey_Flag_Update.sql	Welcome_Journey_Status	Check matching redeemed welcome coupons and output status
+## Project Overview
 
+A SQL-driven welcome journey developed for The Tavern Group, a fictional hospitality brand managing multiple pub venues.
 
-SQL features: EXISTS, NOT EXISTS, CASE, DATEDIFF, DATEADD, GETDATE, CONCAT, date filtering, and correlated subqueries.
-Automation Studio workflow
-The three SQL Query Activities are ordered as staging → journey entry → flag/status update.
-Journey Builder configuration
-The configured canvas includes the four-email sequence, wait activities, and a redemption-based decision split before the optional reminder. The screenshot shows the journey was not yet scheduled, and it was not activated for live sending.
-Decision-split screenshot captured from the accompanying portfolio page; the original SFMC journey canvas above is a higher-resolution source image.
-Execution history and testing
-The submitted run log shows three completed runs and one earlier failed run during testing (75% completed / 25% failed for the four recorded attempts). These are execution statuses, not email delivery or campaign performance figures.
-The staging query uses a moving 24-hour signup window. A subsequent empty staging Data Extension therefore does not by itself establish that the workflow failed. No live send, coupon redemption uplift, or revenue outcome is claimed.
-Documentation
-Data Extensions and field definitions
-Implementation and activity flow
-Testing, assumptions, and limitations
-Portfolio linking instructions
-Tools and technologies
-Salesforce Marketing Cloud · SQL Query Activities · Automation Studio · Journey Builder · Data Extensions · SQL
-Project status
-Training implementation: SQL workflow configured and tested; Journey Builder configured but not activated. These scripts are shared as an educational case study, not as independently production-validated SQL.
+Built using Salesforce Marketing Cloud (SFMC), SQL Query Activities, Automation Studio, and Journey Builder, this project demonstrates audience qualification, automated Data Extension updates, duplicate prevention, and coupon redemption tracking.
+
+## Business Scenario
+
+The Tavern Group introduced a member rewards program with registrations through kiosks, its website, and an app.
+
+The business wanted to welcome eligible new members, introduce their registered venue, and encourage them to redeem a welcome coupon within 14 days.
+
+The planned campaign includes four emails:
+
+| Email | Timing | Purpose |
+|---|---|---|
+| Welcome Email | Within 1 day | Welcome new members |
+| Educational Email | Day 3 | Introduce venue activities |
+| Offer Email | Day 7 | Present the welcome coupon |
+| Reminder Email | Day 14 | Remind members who haven't redeemed |
+
+## Requirements
+
+### Audience Qualification
+- Identify members who signed up within the previous 24 hours.
+- Include members aged 21 or older who opted into marketing emails.
+- Include members registered with an active venue.
+- Exclude banned members, staff email addresses, and existing journey members.
+
+### SQL and Automation
+- Generate welcome coupon codes using MemberID.
+- Prepare eligible members using staging and journey entry Data Extensions.
+- Track coupon redemption using transaction records.
+- Prevent duplicate journey entry.
+
+### Journey Builder
+- Configure a four-email welcome sequence.
+- Use wait activities to manage email timing.
+- Use a decision split to determine whether members should receive the final reminder.
+
+## Data Extensions
+
+Four source Data Extensions support the campaign.
+
+| Data Extension | Purpose |
+|---|---|
+| Signups | Stores new member registration details |
+| Venue | Stores venue details and active status |
+| ExcludedMembers | Identifies members excluded from communications |
+| Transactions | Stores transaction and coupon redemption records |
+
+Three additional Data Extensions support the SQL workflow.
+
+| Data Extension | Purpose |
+|---|---|
+| Welcome_Journey_Staging | Stores eligible members selected by Query 1 |
+| Welcome_Journey_Entry | Holds the audience prepared for Journey Builder |
+| Welcome_Journey_Status | Stores redemption status generated by Query 3 |
+
+## SQL Automation
+
+The automation contains three SQL Query Activities executed sequentially.
+
+### 1. Welcome_Journey_Staging
+
+**Purpose:** Select eligible members for the welcome journey.
+
+The first query:
+- Applies audience eligibility criteria.
+- Uses date filtering to identify recent registrations.
+- Uses EXISTS and NOT EXISTS to qualify and exclude members.
+- Generates welcome coupon codes.
+- Initializes journey-related fields.
+
+**SQL File:** `Welcome_Journey_Staging.sql`
+
+### 2. Welcome_Journey_Entry_SQL
+
+**Purpose:** Populate the final Journey Entry Data Extension.
+
+The second query transfers eligible member records from the staging Data Extension into Welcome_Journey_Entry.
+
+This prepares the qualified audience for Journey Builder.
+
+**SQL File:** `Welcome_Journey_Entry_SQL.sql`
+
+### 3. Welcome_Journey_Flag_Update
+
+**Purpose:** Update coupon redemption information.
+
+The third query checks transaction records to identify members who have redeemed their welcome coupons.
+
+The query outputs redemption information to Welcome_Journey_Status, supporting conditional messaging within the welcome journey.
+
+**SQL File:** `Welcome_Journey_Flag_Update.sql`
+
+## Journey Builder Configuration
+
+The welcome journey was configured with four planned emails:
+
+1. Welcome Email
+2. Educational Email
+3. Offer Email
+4. Reminder Email
+
+Wait activities control the timing between communications.
+
+A decision split uses redemption information to determine whether members should receive the final reminder.
+
+The journey was configured as part of the practice assignment but was not activated for live sending.
+
+## Testing and Results
+
+The SQL automation was tested through Automation Studio.
+
+The execution history shows:
+- Three completed automation runs.
+- One earlier failed run during testing.
+- A configured three-step SQL workflow.
+
+The project demonstrates the implementation of SQL-based audience qualification, automated Data Extension updates, duplicate prevention logic, and coupon redemption tracking.
+
+The welcome journey was configured for practice and was not activated for live sending.
+
+No live campaign performance results are claimed.
+
+## SQL Features Demonstrated
+
+- SELECT statements
+- WHERE filtering
+- EXISTS and NOT EXISTS
+- CASE statements
+- Subqueries
+- Date filtering and calculations
+- CONCAT()
+- Audience qualification
+- Exclusion and duplicate prevention logic
+- Coupon redemption tracking
+
+## Tools and Technologies
+
+- Salesforce Marketing Cloud (SFMC)
+- SQL
+- Automation Studio
+- SQL Query Activities
+- Data Extensions
+- Journey Builder
+
+## Project Note
+
+This project was completed as part of the AMPscript Academy SQL Capstone training program.
+
+It demonstrates the configuration and testing of SQL Query Activities, audience preparation, automation workflows, and Journey Builder in Salesforce Marketing Cloud.
+
