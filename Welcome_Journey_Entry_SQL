@@ -1,0 +1,15 @@
+/* ADD ELIGIBLE MEMBERS INTO JOURNEY ENTRY DE */
+SELECT    S.MemberID,
+          S.Email,
+          S.FirstName,
+          S.EmailOptIn,
+          S.Age,
+          S.VenueID,
+          S.SignedUpDate,
+          S.SignupSource,
+          S.JourneyEntryDate,
+          S.CouponCode,
+          S.IsExcluded,
+          S.HasRedeemed
+
+FROM      [Welcome_Journey_Staging] S
