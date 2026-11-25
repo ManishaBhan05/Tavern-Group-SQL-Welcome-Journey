@@ -1,0 +1,70 @@
+SELECT         S.MemberID, 
+               S.Email, 
+               S.FirstName, 
+               S.EmailOptIn, 
+               
+               /* CALCULATE AGE */
+               DATEDIFF(YEAR, S.DOB, GETDATE()) AS Age, 
+               
+               S.VenueID, 
+               S.SignedUpDate, 
+               S.SignupSource, 
+               
+               /* JOURNEY ENTRY DATE */
+               GETDATE() AS JourneyEntryDate, 
+               
+               /* COUPONCODE GENERATED */
+               CONCAT('WELCOME-', S.MemberID) AS CouponCode,
+               
+               /* NOT EXCLUDED */
+               0 AS IsExcluded, 
+               
+               /* CHECK IF COUPON HAS BEEN REDEEMED */
+               CASE
+                    WHEN EXISTS (
+                                   SELECT 1
+                                   FROM [Transactions] T
+                                   WHERE S.MemberID = T.MemberID
+                                   AND T.CouponCodeUsed = 1
+                                  )
+                    THEN 1
+                    ELSE 0
+                END AS HasRedeemed
+                
+FROM            [Signups] S
+
+/* HAVE OPTED INTO EMAILS */
+WHERE           S.EmailOptIn = 1
+
+/* HAVE SIGNED UP WITHIN LAST 24 HOURS */
+AND             S.SignedUpDate >= DATEADD(D, -1, GETDATE())
+AND             S.SignedUpDate <= GETDATE()
+
+/* ARE 21 YEARS OR ABOVE */
+AND             S.DOB <= DATEADD(YEAR, -21, GETDATE())
+
+/* MUST SIGNED UP TO ACTIVE VENUE */
+AND EXISTS  ( 
+                SELECT  1
+                FROM    [Venue] V
+                WHERE   S.VenueID = V.VenueID
+                AND     V.IsVenueActive = 'TRUE'
+             )        
+                
+/* NOT EXISTS IN EXCLUDED DE  */
+AND NOT EXISTS (
+                 SELECT  1
+                 FROM    [ExcludedMembers] Exc
+                 WHERE   S.Email = Exc.Email
+                  
+                ) 
+                
+/* EXCLUDE STAFF EMAILS */   
+AND S.Email NOT LIKE '%@taverngroupstaff.com'
+
+/* NOT ALREADY ADDED TO JOURNEY */
+AND NOT EXISTS (
+                  SELECT 1
+                  FROM [Welcome_Journey_Entry] E
+                  WHERE S.MemberID = E.MemberID
+                )
