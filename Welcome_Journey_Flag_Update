@@ -1,0 +1,19 @@
+SELECT          CONCAT('', E.MemberID) AS ContactKey,
+
+                /* CHECK IF WELCOME COUPON HAS BEEN REDEEMED */
+                CASE
+                      WHEN EXISTS (
+                                     SELECT 1
+                                     FROM [Transactions] T
+                                     WHERE E.MemberID = T.MemberID
+                                     AND T.CouponCodeUsed = 1
+                                     AND T.CouponCode = E.CouponCode
+                                   )
+                      THEN 1
+                      ELSE 0
+                END AS HasRedeemed,
+
+                 /* LAST CHECKED DATE */
+                GETDATE() AS LastCheckedDate
+
+FROM             [Welcome_Journey_Entry] E
